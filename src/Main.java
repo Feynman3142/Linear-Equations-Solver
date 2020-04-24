@@ -39,15 +39,16 @@ public class Main {
                 constMat = Matrix.createMatrix(numEqns, 1);
                 int row = 0;
                 while (reader.ready()) {
-                    double[] vals = Arrays.stream(reader.readLine().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+                    // Friendly note: use the argument in toArray() to cast to a user class array instead of explicit class casting
+                    Complex[] vals = Arrays.stream(reader.readLine().split("\\s+")).map(Complex::parseComplex).toArray(Complex[]::new);
                     constMat.data[row][0] = vals[numVars];
                     System.arraycopy(vals, 0, coeffMat.data[row], 0, numVars);
                     ++row;
                 }
                 gotData = true;
             } catch (NumberFormatException e) {
-                System.out.println("Non-numeric data found in input file. Unable to parse!");
-                System.out.printf("[DETAILS] %s", e.getMessage());
+                System.out.println("Invalid data found in input file. Unable to parse!");
+                System.out.printf("[DETAILS]\n%s", e.getMessage());
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             }
@@ -61,21 +62,21 @@ public class Main {
             return;
         }
 
-        System.out.println("Start solving the equation.");
+        System.out.println("Start solving the equation.\n");
 
         LinearSystem linSys = new GaussJordSolver(coeffMat, constMat);
         linSys.solve();
         if (linSys.hasInfiniteSolutions) {
-            System.out.println("Infinitely many solutions");
+            System.out.println("\nInfinitely many solutions");
         } else if (linSys.hasNoSolutions) {
-            System.out.println("No solutions");
+            System.out.println("\nNo solutions");
         } else if (linSys.hasUniqueSolution){
-            System.out.print("The solution is: (");
+            System.out.print("\nThe solution is: (");
             for (int elem = 0; elem < linSys.solArr.length; ++elem) {
-                System.out.printf("%f%s", linSys.solArr[elem], (elem == linSys.solArr.length - 1) ? ")\n" : ", ");
+                System.out.printf("%s%s", linSys.solArr[elem].toString(), (elem == linSys.solArr.length - 1) ? ")\n" : ", ");
             }
         } else {
-            System.out.println("Error determining solution");
+            System.out.println("\nError determining solution");
         }
 
         if (!outFile.exists() && !outFile.createNewFile()) {
@@ -87,13 +88,13 @@ public class Main {
                 } else if (linSys.hasNoSolutions) {
                     writer.println("No solutions");
                 } else if (linSys.hasUniqueSolution) {
-                    for (double val : linSys.solArr) {
+                    for (Complex val : linSys.solArr) {
                         writer.println(val);
                     }
                 } else {
                     writer.println("Error determining solution");
                 }
-                System.out.printf("Saved to %s", outFile.getName());
+                System.out.printf("\nSaved to %s\n", outFile.getName());
             } catch (IOException e) {
                 e.printStackTrace();
             }

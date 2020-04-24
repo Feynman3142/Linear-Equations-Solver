@@ -4,12 +4,14 @@ import java.util.Arrays;
 
 abstract class LinearSystem {
 
+    static final Complex ONE = Complex.valueOf(1.0, 0.0);
+    static final Complex NEGATIVE_ONE = Complex.valueOf(-1.0, 0.0);
     boolean hasInfiniteSolutions;
     boolean hasNoSolutions;
     boolean hasUniqueSolution;
     Matrix coeffMat;
     Matrix constMat;
-    double[] solArr;
+    Complex[] solArr;
 
     /**
      * Solve the linear system of equations represented by
@@ -35,22 +37,22 @@ class GaussJordSolver extends LinearSystem {
         this.hasInfiniteSolutions = false;
         this.hasUniqueSolution = false;
         this.hasNoSolutions = false;
-        this.solArr = new double[coeffMat.cols];
+        this.solArr = new Complex[coeffMat.cols];
     }
 
     /**
      * Performs the elementary scaling of a matrix's row
      * @param mat the matrix to operate on ('Matrix' class)
      * @param row the row of the matrix to operate on (int)
-     * @param scaleFactor the factor by which to scale the row (double)
+     * @param scaleFactor the factor by which to scale the row ('Complex')
      */
-    private static void scaleRow(Matrix mat, int row, double scaleFactor) {
+    private static void scaleRow(Matrix mat, int row, Complex scaleFactor) {
         // If an invalid row number is given, throw an exception
         if (row >= mat.rows) {
             throw new IllegalArgumentException(String.format("Cannot perform operation on row %d with a matrix of %d rows", row, mat.rows));
         }
         for (int elem = 0; elem < mat.cols; ++elem) {
-            mat.data[row][elem] *= scaleFactor;
+            mat.data[row][elem] = mat.data[row][elem].multiply(scaleFactor);
         }
     }
 
@@ -65,7 +67,7 @@ class GaussJordSolver extends LinearSystem {
         if (row1 >= mat.rows || row2 >= mat.rows) {
             throw new IllegalArgumentException(String.format("Cannot perform operation on rows %d and %d with a matrix of %d rows", row1, row2, mat.rows));
         }
-        double[] tempStore = mat.data[row1];
+        Complex[] tempStore = mat.data[row1];
         mat.data[row1] = mat.data[row2];
         mat.data[row2] = tempStore;
     }
@@ -82,7 +84,7 @@ class GaussJordSolver extends LinearSystem {
             throw new IllegalArgumentException(String.format("Cannot perform operation on columns %d and %d with a matrix of %d columns", col1, col2, mat.cols));
         }
         for (int row = 0; row < mat.rows; ++row) {
-            double temp = mat.data[row][col1];
+            Complex temp = mat.data[row][col1];
             mat.data[row][col1] = mat.data[row][col2];
             mat.data[row][col2] = temp;
         }
@@ -94,15 +96,15 @@ class GaussJordSolver extends LinearSystem {
      * @param mat the matrix to operate on ('Matrix' class)
      * @param row1 the row to add to (int)
      * @param row2 the row being added (int)
-     * @param scaleFactor the factor by which to scale row2 before addition. (Does not affect row2)
+     * @param scaleFactor the factor by which to scale row2 before addition. (Does not affect row2) ('Complex')
      */
-    private static void addScaledRowToRow(Matrix mat, int row1, int row2, double scaleFactor) {
+    private static void addScaledRowToRow(Matrix mat, int row1, int row2, Complex scaleFactor) {
         // If an invalid row number is given, throw an exception
         if (row1 >= mat.rows || row2 >= mat.rows) {
             throw new IllegalArgumentException(String.format("Cannot perform operation on rows %d and %d with a matrix of %d rows", row1, row2, mat.rows));
         }
         for (int elem = 0; elem < mat.cols; ++elem) {
-            mat.data[row1][elem] += (scaleFactor * mat.data[row2][elem]);
+            mat.data[row1][elem] = mat.data[row1][elem].add(mat.data[row2][elem].multiply(scaleFactor));
         }
     }
 
@@ -164,7 +166,7 @@ class GaussJordSolver extends LinearSystem {
         for (int col = colOffset; col < mat.cols; ++col) {
             // using this criteria to determine if an element is zero or not due to rounding errors
             // that can cause a number not to be zero exactly and thus give a false positive
-            if (Math.abs(mat.data[row][col]) > 0.001) {
+            if (!mat.data[row][col].isZero()) {
                 return col;
             }
         }
@@ -185,7 +187,7 @@ class GaussJordSolver extends LinearSystem {
         for (int row = rowOffset; row < mat.rows; ++row) {
             // using this criteria to determine if an element is zero or not due to rounding errors
             // that can cause a number not to be zero exactly and thus give a false positive
-            if (Math.abs(mat.data[row][col]) > 0.001) {
+            if (!mat.data[row][col].isZero()) {
                 return row;
             }
         }
@@ -201,6 +203,7 @@ class GaussJordSolver extends LinearSystem {
             System.arraycopy(coeffMat.data[row], 0, sysMat.data[row], 0, coeffMat.cols);
             sysMat.data[row][sysMat.cols - 1] = constMat.data[row][0];
         }
+        System.out.println(sysMat);
 
         // Create an array to keep track of column swaps
         // The array has a size equal to the # of columns in the coefficient matrix
@@ -230,17 +233,17 @@ class GaussJordSolver extends LinearSystem {
                 colSwapHistory[Math.max(inds[1], row)] = Math.min(inds[1], row); // Look at comment above 'colSwapHistory' declaration for more
             }
             // Scale non-zero element to 1; skip if it already is
-            if (sysMat.data[row][row] != 1.0) {
-                double scaleFactor = 1.0 / sysMat.data[row][row];
+            if (!sysMat.data[row][row].equals(ONE)) {
+                Complex scaleFactor = ONE.divide(sysMat.data[row][row]);
                 scaleRow(sysMat, row, scaleFactor);
-                System.out.printf("%f * R%d -> R%d\n", scaleFactor, row + 1, row + 1);
+                System.out.printf("%s * R%d -> R%d\n", scaleFactor.toString(), row + 1, row + 1);
             }
             // Make each element in the same column below the row equal to zero; skip if already is
             for (int otherRow = row + 1; otherRow < sysMat.rows; ++otherRow) {
-                if (sysMat.data[otherRow][row] != 0.0) {
-                    double otherScaleFactor = (-1) * sysMat.data[otherRow][row];
+                if (!sysMat.data[otherRow][row].isZero()) {
+                    Complex otherScaleFactor = NEGATIVE_ONE.multiply(sysMat.data[otherRow][row]);
                     addScaledRowToRow(sysMat, otherRow, row, otherScaleFactor);
-                    System.out.printf("%f * R%d + R%d -> R%d\n", otherScaleFactor, row + 1, otherRow + 1, otherRow + 1);
+                    System.out.printf("%s * R%d + R%d -> R%d\n", otherScaleFactor.toString(), row + 1, otherRow + 1, otherRow + 1);
                 }
             }
         }
@@ -275,10 +278,10 @@ class GaussJordSolver extends LinearSystem {
             // Convert upper triangular matrix to reduced row echelon form
             for (int row = 0; row < numSignificantEqns; ++row) {
                 for (int col = row + 1; col < sysMat.cols - 1; ++col) {
-                    if (sysMat.data[row][col] != 0.0) {
-                        double scaleFactor = (-1) * sysMat.data[row][col];
+                    if (!sysMat.data[row][col].isZero()) {
+                        Complex scaleFactor = NEGATIVE_ONE.multiply(sysMat.data[row][col]);
                         addScaledRowToRow(sysMat, row, col, scaleFactor);
-                        System.out.printf("%f * R%d -> R%d\n", scaleFactor, col + 1, row + 1);
+                        System.out.printf("%s * R%d -> R%d\n", scaleFactor.toString(), col + 1, row + 1);
                     }
                 }
             }
