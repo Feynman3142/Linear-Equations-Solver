@@ -36,17 +36,23 @@ The program is written to take inputs from the commmand line. Below are the foll
 2. If infinite solutions exist, the program simply writes "Infinitely many solutions" to the file.
 3. If an unique solution exists, the program prints the value of each variable on a separate line.
 
-Demo of unique solution with real coefficients
-![Demo of unique solution with real coefficients](media/demo1.jpg)
+#### Output Screenshots
 
-Demo of no solution with real coefficients
-![Demo of no solution with real coefficients](media/demo2.jpg)
+| Demo of unique solution with real coefficients |
+|:--:|
+| ![Demo of unique solution with real coefficients](media/demo1.jpg) |
 
-Demo of unique solution with imaginary coefficients
-![Demo of unique solution with imaginary coefficients](media/demo3.jpg)
+| Demo of no solution with real coefficients |
+|:--:|
+| ![Demo of no solution with real coefficients](media/demo2.jpg) |
 
-Demo of infinitely many solutions with imaginary coefficients
-![Demo of infinitely many solutions with imaginary coefficients](media/demo4.jpg)
+| Demo of unique solution with imaginary coefficients |
+|:--:|
+| ![Demo of unique solution with imaginary coefficients](media/demo3.jpg) |
+
+| Demo of infinitely many solutions with imaginary coefficients |
+|:--:|
+| ![Demo of infinitely many solutions with imaginary coefficients](media/demo4.jpg) |
 
 ### Dependencies
 
